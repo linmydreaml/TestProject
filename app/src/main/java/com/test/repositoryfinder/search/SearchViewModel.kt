@@ -23,27 +23,29 @@ class SearchViewModel(private val api: ApiService) : ViewModel() {
 
     fun searchRepo(name: String) {
 
-        val request = Single.zip(api.searchByWord(name, "stars", "desc", "1","15"),
-            api.searchByWord(name, "stars", "desc", "2","15"),
-            BiFunction<SearchResultModel,SearchResultModel,ArrayList<Items>> { item1, item2 ->
-                var mergedList = ArrayList<Items>()
-                mergedList.addAll(item1.items)
-                mergedList.addAll(item2.items)
-                mergedList
-            })
+        val request = Single.zip(api.searchByWord(name, "stars", "desc", "1", "15").
+        subscribeOn(Schedulers.newThread()),
+                api.searchByWord(name, "stars", "desc", "2", "15").
+                subscribeOn(Schedulers.newThread()),
+                BiFunction<SearchResultModel, SearchResultModel, ArrayList<Items>> { item1, item2 ->
+                    var mergedList = ArrayList<Items>()
+                    mergedList.addAll(item1.items)
+                    mergedList.addAll(item2.items)
+                    mergedList
+                })
 
-        request.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : SingleObserver<ArrayList<Items>> {
-                override fun onSubscribe(d: Disposable?) {
-                }
+        request.observeOn(AndroidSchedulers.mainThread())
+                .subscribe(object : SingleObserver<ArrayList<Items>> {
+                    override fun onSubscribe(d: Disposable?) {
+                    }
 
-                override fun onError(e: Throwable?) {
-                }
+                    override fun onError(e: Throwable?) {
+                    }
 
-                override fun onSuccess(t: ArrayList<Items>?) {
-                    searchModel.value = t
-                }
+                    override fun onSuccess(t: ArrayList<Items>?) {
+                        searchModel.value = t
+                    }
 
-            })
+                })
     }
 }
